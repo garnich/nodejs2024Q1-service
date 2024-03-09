@@ -59,4 +59,11 @@ export class TracksService {
       const idx = TracksService.tracks.findIndex((track: ITracks) => track.id === id);
       TracksService.tracks = [...TracksService.tracks.slice(0, idx), ...TracksService.tracks.slice(idx + 1)];
     }
+
+    removeNotExistingAlbumId(id: string) {
+        TracksService.tracks = TracksService.tracks.map((track: ITracks) => ({
+          ...track,
+          albumId: track.albumId === id ? null : track.albumId,
+        }));
+    }
 }
