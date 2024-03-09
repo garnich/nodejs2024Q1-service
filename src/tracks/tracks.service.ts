@@ -66,4 +66,11 @@ export class TracksService {
           albumId: track.albumId === id ? null : track.albumId,
         }));
     }
+
+    removeNotExistingArtistId(id: string) {
+        TracksService.tracks = TracksService.tracks.map((track: ITracks) => ({
+          ...track,
+          artistId: track.artistId === id ? null : track.artistId,
+        }));
+      }
 }
