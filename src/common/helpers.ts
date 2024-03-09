@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { version as getUuidVersion, validate as isValidUuid } from 'uuid';
-import { UUID_VERSION } from './constansts';
+import { UUID_VERSION } from './constants';
 
 export const passwordsNotMatch = () =>
   new HttpException(
