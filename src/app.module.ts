@@ -4,9 +4,10 @@ import { AppService } from './app.service';
 
 import { TracksModule } from './tracks/tracks.module';
 import { UsersModule } from './users/users.modeule';
+import { AlbumsModule } from './albums/albums.module';
 
 @Module({
-  imports: [TracksModule, UsersModule],
+  imports: [TracksModule, UsersModule, AlbumsModule],
   controllers: [AppController],
   providers: [AppService],
 })
