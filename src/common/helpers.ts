@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { version as getUuidVersion, validate as isValidUuid } from 'uuid';
 import { UUID_VERSION } from './constants';
+import { UpdateTrackDto } from "../tracks/dto/update-track.dto";
 
 export const passwordsNotMatch = () =>
   new HttpException(
@@ -23,3 +24,9 @@ export const itemNotInFavoritesExeption = (item: string) =>
     `Requested ${item} is not exist in favourites or not exist at all`,
     HttpStatus.UNPROCESSABLE_ENTITY,
   );
+
+export const isValidTrackPayload = (payload: UpdateTrackDto): boolean => {
+  const { name, duration } = payload;
+
+  return typeof name === 'string' || typeof duration === 'number';
+}
