@@ -5,7 +5,6 @@ const HEADERS = {
     ACCEPT: 'Accept',
     APP_JSON: 'application/json',
 };
-  
 
 const EXEPTION_ITEM = {
     ARTIST: 'artist',
@@ -14,4 +13,10 @@ const EXEPTION_ITEM = {
     USER: 'user',
 };
 
-export { USER_VESION, UUID_VERSION, HEADERS, EXEPTION_ITEM };
+const EXEPTION_TYPE = {
+    ARTISTS: 'artists',
+    ALBUMS: 'albums',
+    TRACKS: 'tracks',
+};
+
+export { USER_VESION, UUID_VERSION, HEADERS, EXEPTION_ITEM, EXEPTION_TYPE };
