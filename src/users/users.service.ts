@@ -4,7 +4,7 @@ import { UserDto } from './dto/user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { IBaseUser, IFullUser } from './users.interface';
 import { passwordsNotMatch } from '../common/helpers';
-import { USER_VESION } from '../common/constansts';
+import { USER_VESION } from '../common/constants';
 
 @Injectable()
 export class UsersService {
