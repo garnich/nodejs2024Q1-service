@@ -1,25 +1,30 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AlbumsService } from 'src/albums/albums.service';
+import { ArtistsService } from 'src/artists/artists.service';
+import { TrackEntity } from 'src/entities/track.entity';
+import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { CreateTrackDto } from "./dto/create-track.dto";
-import { UpdateTrackDto } from "./dto/update-track.dto";
-import { ITracks } from "./tracks.interface";
-import { isValidTrackPayload, invalidIdExeption } from '../common/helpers';
+import { CreateTrackDto } from './dto/create-track.dto';
+import { UpdateTrackDto } from './dto/update-track.dto';
+import { ITracks } from './tracks.interface';
 
 @Injectable()
 export class TracksService {
-  private static tracks: ITracks[] = [];
+  constructor(
+    @InjectRepository(TrackEntity)
+    private trackRepository: Repository<TrackEntity>,
+    private readonly albumService: AlbumsService,
+    private readonly artistService: ArtistsService,
+  ) {}
 
-  constructor() {
-    TracksService.tracks = [];
+  async getTracks(): Promise<TrackEntity[]> {
+    return this.trackRepository.find();
   }
 
-  getTracks(): ITracks[] {
-    return TracksService.tracks;
-  }
-
-  createTrack(track: CreateTrackDto) {
-    const albumId = track.albumId ? track.albumId : null;
-    const artistId = track.artistId ? track.artistId : null;
+  async createTrack(track: CreateTrackDto): Promise<TrackEntity> {
+    const artistId = this.artistService.getArtist(track.artistId ) ? track.artistId : null;
+    const albumId = this.albumService.getAlbum(track.albumId) ? track.albumId  : null;
 
     const newTrack: ITracks = {
       id: uuidv4(),
@@ -29,66 +34,27 @@ export class TracksService {
       duration: track.duration,
     };
 
-    TracksService.tracks.push(newTrack);
+    const createTrack = this.trackRepository.create(newTrack);
 
-    return newTrack;
+    return await this.trackRepository.save(createTrack);
   }
 
-  getTrack(id: string): ITracks {
-    return TracksService.tracks.find((track: ITracks) => track.id === id);
+  async getTrack(id: string): Promise<TrackEntity> {
+    return await this.trackRepository.findOne({ where: { id } });
   }
 
-  updateTrack(id: string, payload: UpdateTrackDto): ITracks {
-    const isValid = isValidTrackPayload(payload);
+  async updateTrack(id: string, payload: UpdateTrackDto): Promise<TrackEntity> {
+    payload.artistId =  this.artistService.getArtist(payload.artistId) ? payload.artistId : null;
+    payload.albumId = this.albumService.getAlbum(payload.albumId) ? payload.albumId : null;
+    const track = await this.getTrack(id);
 
-    if (!isValid) {
-      throw invalidIdExeption();
-    }
+    Object.assign(track, payload);
+    await this.trackRepository.save(track);
 
-    const idx = TracksService.tracks.findIndex((track) => track.id === id);
-
-    const newTrackData = {
-      name: payload.name ? payload.name : TracksService.tracks[idx].name,
-      duration: payload.duration
-        ? payload.duration
-        : TracksService.tracks[idx].duration,
-      albumId: payload.albumId
-        ? payload.albumId
-        : TracksService.tracks[idx].albumId,
-      artistId: payload.artistId
-        ? payload.artistId
-        : TracksService.tracks[idx].artistId,
-    };
-
-    TracksService.tracks[idx] = {
-      ...TracksService.tracks[idx],
-      ...newTrackData,
-    };
-
-    return TracksService.tracks[idx];
+    return this.getTrack(id);
   }
 
-  deleteTrack(id: string) {
-    const idx = TracksService.tracks.findIndex(
-      (track: ITracks) => track.id === id,
-    );
-    TracksService.tracks = [
-      ...TracksService.tracks.slice(0, idx),
-      ...TracksService.tracks.slice(idx + 1),
-    ];
-  }
-
-  removeNotExistingAlbumId(id: string) {
-    TracksService.tracks = TracksService.tracks.map((track: ITracks) => ({
-      ...track,
-      albumId: track.albumId === id ? null : track.albumId,
-    }));
-  }
-
-  removeNotExistingArtistId(id: string) {
-    TracksService.tracks = TracksService.tracks.map((track: ITracks) => ({
-      ...track,
-      artistId: track.artistId === id ? null : track.artistId,
-    }));
+  async deleteTrack(id: string) {
+    await this.trackRepository.delete(id);
   }
 }

@@ -2,23 +2,27 @@ import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { UserDto } from './dto/user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { IBaseUser, IFullUser } from './users.interface';
-import { passwordsNotMatch } from '../common/helpers';
-import { USER_VESION } from '../common/constants';
+import { IBaseUser, IFullUser } from './user.interface';
+import { itemNotExistExeption, passwordsNotMatch } from 'src/helpers';
+import { EXEPTION_ITEM, USER_VESION } from 'src/constants';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from 'src/entities/user.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-  private static users: IFullUser[] = [];
+  constructor(
+    @InjectRepository(UserEntity)
+    private usersRepository: Repository<UserEntity>,
+  ){}
 
-  constructor() {
-    UsersService.users = [];
+  async getUsers(): Promise<IBaseUser[]> {
+    const usersFind = await this.usersRepository.find();
+
+    return usersFind.map((user) => user.toResponse());
   }
 
-  getUsers(): IBaseUser[] {
-    return UsersService.users;
-  }
-
-  createUser(user: UserDto): IBaseUser {
+  async createUser(user: UserDto) {
     const dateNow = new Date().valueOf();
 
     const newUser: IFullUser = {
@@ -30,68 +34,55 @@ export class UsersService {
       updatedAt: dateNow,
     };
 
-    UsersService.users.push(newUser);
+    const createdNewUser = this.usersRepository.create(newUser);
 
-    return {
-      id: newUser.id,
-      login: newUser.login,
-      version: newUser.version,
-      createdAt: newUser.createdAt,
-      updatedAt: newUser.updatedAt,
-    };
+    return (await this.usersRepository.save(createdNewUser)).toResponse();
   }
 
-  getUser(id: string): IBaseUser {
-    const user = UsersService.users.find((user: IFullUser) => user.id === id);
+  async getUser(id: string): Promise<IBaseUser> {
+    const user = await this.usersRepository.findOneBy({id});
+    
     if (user) {
-      return {
-        id: user.id,
-        login: user.login,
-        version: user.version,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
+      return user.toResponse();
     } else {
-      return null;
+      throw itemNotExistExeption(EXEPTION_ITEM.USER);
     }
   }
 
-  updateUserPass(id: string, payload: UpdateUserDto): IBaseUser {
+  async updateUserPass(id: string, payload: UpdateUserDto) {
     const { oldPassword, newPassword } = payload;
 
-    const idx = UsersService.users.findIndex((user) => user.id === id);
+    const user = await this.usersRepository.findOneBy({id});
 
-    if (oldPassword === UsersService.users[idx].password) {
-      const newUserData = {
-        password: newPassword,
-        updatedAt: new Date().valueOf(),
-        version: UsersService.users[idx].version + USER_VESION,
-      };
+    if (!user) {
+      throw itemNotExistExeption(EXEPTION_ITEM.USER);
+    }
 
-      UsersService.users[idx] = {
-        ...UsersService.users[idx],
-        ...newUserData,
-      };
-
-      return {
-        id: UsersService.users[idx].id,
-        login: UsersService.users[idx].login,
-        version: UsersService.users[idx].version,
-        createdAt: UsersService.users[idx].createdAt,
-        updatedAt: UsersService.users[idx].updatedAt,
-      };
-    } else {
+    if (oldPassword !== user.password) {
       throw passwordsNotMatch();
     }
+
+    const dateNow = new Date().valueOf();
+
+
+    const newPassData = {
+      password: newPassword,
+      updatedAt: dateNow
+    }
+
+    Object.assign(user, newPassData);
+    await this.usersRepository.save(user);
+
+    return (await this.usersRepository.findOneBy({id})).toResponse();
   }
 
-  deleteUser(id: string) {
-    const idx = UsersService.users.findIndex(
-      (user: IBaseUser) => user.id === id,
-    );
-    UsersService.users = [
-      ...UsersService.users.slice(0, idx),
-      ...UsersService.users.slice(idx + 1),
-    ];
+  async deleteUser(id: string) {
+    const user = await this.usersRepository.findOneBy({id});
+
+    if (!user) {
+      throw itemNotExistExeption(EXEPTION_ITEM.USER);
+    }
+
+    await this.usersRepository.delete(id);
   }
 }

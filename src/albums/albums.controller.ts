@@ -22,11 +22,16 @@ import {
   IDValidator,
   invalidIdExeption,
   itemNotExistExeption,
-} from '../common/helpers';
+} from 'src/helpers';
 import { TracksService } from 'src/tracks/tracks.service';
 import { FavoritesService } from 'src/favorites/favorites.service';
 
-import { EXEPTION_ITEM, HEADERS, UUID_VERSION, EXEPTION_TYPE } from '../common/constants';
+import {
+  EXEPTION_ITEM,
+  EXEPTION_TYPE,
+  HEADERS,
+  UUID_VERSION,
+} from 'src/constants';
 
 @Controller('album')
 export class AlbumsController {
@@ -39,35 +44,35 @@ export class AlbumsController {
   @Get()
   @Header(HEADERS.ACCEPT, HEADERS.APP_JSON)
   @HttpCode(HttpStatus.OK)
-  findAll(): IAlbums[] {
-    return this.albumService.getAlbums();
+  async findAll(){
+    return await this.albumService.getAlbums();
   }
 
   @Post()
   @Header(HEADERS.ACCEPT, HEADERS.APP_JSON)
   @HttpCode(HttpStatus.CREATED)
-  createAlbum(
+  async createAlbum(
     @Body(new ValidationPipe()) createAlbumDto: CreateAlbumDto,
-  ): IAlbums {
-    return this.albumService.createAlbum(createAlbumDto);
+  ) {
+    return await this.albumService.createAlbum(createAlbumDto);
   }
 
   @Put(':id')
   @Header(HEADERS.ACCEPT, HEADERS.APP_JSON)
   @HttpCode(HttpStatus.OK)
-  updateAlbum(
+  async updateAlbum(
     @Body(new ValidationPipe()) updateAlbumDto: UpdateAlbumDto,
     @Param('id', new ParseUUIDPipe({ version: UUID_VERSION })) id: string,
-  ): AlbumDto {
+  ) {
     if (!IDValidator(id)) {
       throw invalidIdExeption();
     } else {
-      const isAlbumExist = !!this.albumService.getAlbum(id);
+      const isAlbumExist = await this.albumService.getAlbum(id);
 
       if (!isAlbumExist) {
         throw itemNotExistExeption(EXEPTION_ITEM.ALBUM);
       } else {
-        return this.albumService.updateAlbum(id, updateAlbumDto);
+        return await this.albumService.updateAlbum(id, updateAlbumDto);
       }
     }
   }
@@ -75,40 +80,39 @@ export class AlbumsController {
   @Delete(':id')
   @Header(HEADERS.ACCEPT, HEADERS.APP_JSON)
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteAlbum(
+  async deleteAlbum(
     @Param('id', new ParseUUIDPipe({ version: UUID_VERSION })) id: string,
   ) {
     if (!IDValidator(id)) {
       throw invalidIdExeption();
     } else {
-      const isAlbumExist = !!this.albumService.getAlbum(id);
+      const isAlbumExist = await this.albumService.getAlbum(id);
 
       if (!isAlbumExist) {
         throw itemNotExistExeption(EXEPTION_ITEM.ALBUM);
       } else {
-        const isItemInFavorites: boolean =
-          this.favoritesService.isItemInFavorites(id, EXEPTION_TYPE.ALBUMS);
+        const isItemInFavorites =
+          await this.favoritesService.isItemInFavorites(id, EXEPTION_TYPE.ALBUMS);
 
         if (isItemInFavorites) {
-          this.favoritesService.removeAlbumFromFavorites(id);
+          await this.favoritesService.removeAlbumFromFavorites(id);
         }
 
-        this.albumService.deleteAlbum(id);
-        this.trackService.removeNotExistingAlbumId(id);
+        await this.albumService.deleteAlbum(id);
       }
+    }
   }
-}
 
   @Get(':id')
   @Header(HEADERS.ACCEPT, HEADERS.APP_JSON)
   @HttpCode(HttpStatus.OK)
-  findById(
+  async findById(
     @Param('id', new ParseUUIDPipe({ version: UUID_VERSION })) id: string,
-  ): IAlbums {
+  ) {
     if (!IDValidator(id)) {
       throw invalidIdExeption();
     } else {
-      const album = this.albumService.getAlbum(id);
+      const album = await this.albumService.getAlbum(id);
 
       if (!album) {
         throw itemNotExistExeption(EXEPTION_ITEM.ALBUM);

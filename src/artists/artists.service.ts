@@ -3,61 +3,46 @@ import { v4 as uuidv4 } from 'uuid';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { IArtists } from './artists.interface';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ArtistEntity } from 'src/entities/artist.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class ArtistsService {
-  private static atrists: IArtists[] = [];
+  constructor(
+    @InjectRepository(ArtistEntity)
+    private artistRepository: Repository<ArtistEntity>,
+  ) {}
 
-  constructor() {
-    ArtistsService.atrists = [];
+  async getArtists(): Promise<ArtistEntity[]> {
+    return await this.artistRepository.find();
   }
 
-  getArtists(): IArtists[] {
-    return ArtistsService.atrists;
-  }
-
-  createArtist(artist: CreateArtistDto) {
+  async createArtist(artist: CreateArtistDto): Promise<ArtistEntity> {
     const newArtist: IArtists = {
       id: uuidv4(),
       name: artist.name,
       grammy: artist.grammy,
     };
 
-    ArtistsService.atrists.push(newArtist);
+    const createdArtist = this.artistRepository.create(newArtist);
 
-    return newArtist;
+    return this.artistRepository.save(createdArtist);
   }
 
-  getArtist(id: string): IArtists {
-    return ArtistsService.atrists.find((artist: IArtists) => artist.id === id);
+  async getArtist(id: string): Promise<ArtistEntity> {
+    return await this.artistRepository.findOne({ where: { id } });
   }
 
-  updateArtist(id: string, payload: UpdateArtistDto): IArtists {
-    const idx = ArtistsService.atrists.findIndex((artist) => artist.id === id);
+  async updateArtist(id: string, payload: UpdateArtistDto): Promise<ArtistEntity> {
+    const artist = await this.getArtist(id);
 
-    const newArtistData = {
-      name: payload.name ? payload.name : ArtistsService.atrists[idx].name,
-      grammy:
-        payload.grammy !== ArtistsService.atrists[idx].grammy
-          ? payload.grammy
-          : ArtistsService.atrists[idx].grammy,
-    };
+    Object.assign(artist, payload);
 
-    ArtistsService.atrists[idx] = {
-      ...ArtistsService.atrists[idx],
-      ...newArtistData,
-    };
-
-    return ArtistsService.atrists[idx];
+    return this.artistRepository.save(artist);
   }
 
-  deleteArtist(id: string) {
-    const idx = ArtistsService.atrists.findIndex(
-      (track: IArtists) => track.id === id,
-    );
-    ArtistsService.atrists = [
-      ...ArtistsService.atrists.slice(0, idx),
-      ...ArtistsService.atrists.slice(idx + 1),
-    ];
+  async deleteArtist(id: string) {
+    await this.artistRepository.delete(id);
   }
 }

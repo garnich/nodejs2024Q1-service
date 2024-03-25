@@ -3,21 +3,26 @@ import { v4 as uuidv4 } from 'uuid';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
 import { IAlbums } from './albums.interface';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AlbumEntity } from 'src/entities/album.entity';
+import { Repository } from 'typeorm';
+import { ArtistsService } from 'src/artists/artists.service';
 
 @Injectable()
 export class AlbumsService {
-  private static albums: IAlbums[] = [];
+  constructor(
+    @InjectRepository(AlbumEntity)
+    private albumRepository: Repository<AlbumEntity>,
+    private readonly artistService: ArtistsService,
+  ) {}
 
-  constructor() {
-    AlbumsService.albums = [];
+  async getAlbums(): Promise<AlbumEntity[]> {
+    return this.albumRepository.find();
   }
 
-  getAlbums(): IAlbums[] {
-    return AlbumsService.albums;
-  }
-
-  createAlbum(album: CreateAlbumDto) {
-    const artistId = album.artistId ? album.artistId : null;
+  async createAlbum(album: CreateAlbumDto) {
+    const artistId = this.artistService.getArtist(album.artistId ) ? album.artistId : null;
+    
 
     const newAlbum: IAlbums = {
       id: uuidv4(),
@@ -26,48 +31,28 @@ export class AlbumsService {
       year: album.year,
     };
 
-    AlbumsService.albums.push(newAlbum);
+    const createAlbum = this.albumRepository.create(newAlbum);
 
-    return newAlbum;
+    return await this.albumRepository.save(createAlbum);
   }
 
-  getAlbum(id: string): IAlbums {
-    return AlbumsService.albums.find((album: IAlbums) => album.id === id);
+  async getAlbum(id: string): Promise<AlbumEntity> {
+    return await this.albumRepository.findOne({ where: { id } });
+
   }
 
-  updateAlbum(id: string, payload: UpdateAlbumDto): IAlbums {
-    const idx = AlbumsService.albums.findIndex((album) => album.id === id);
+  async updateAlbum(id: string, payload: UpdateAlbumDto): Promise<AlbumEntity> {    
+    payload.artistId =  this.artistService.getArtist(payload.artistId) ? payload.artistId : null;
+    const album = await this.getAlbum(id);
 
-    const newAlbumData = {
-      name: payload.name ? payload.name : AlbumsService.albums[idx].name,
-      year: payload.year ? payload.year : AlbumsService.albums[idx].year,
-      artistId: payload.artistId
-        ? payload.artistId
-        : AlbumsService.albums[idx].artistId,
-    };
+    Object.assign(album, payload);
+    await this.albumRepository.save(album);
 
-    AlbumsService.albums[idx] = {
-      ...AlbumsService.albums[idx],
-      ...newAlbumData,
-    };
-
-    return AlbumsService.albums[idx];
+    return this.getAlbum(id);
   }
 
-  deleteAlbum(id: string) {
-    const idx = AlbumsService.albums.findIndex(
-      (album: IAlbums) => album.id === id,
-    );
-    AlbumsService.albums = [
-      ...AlbumsService.albums.slice(0, idx),
-      ...AlbumsService.albums.slice(idx + 1),
-    ];
-  }
+  async deleteAlbum(id: string) {
+    return await this.albumRepository.delete(id);
 
-  removeNotExistingArtistId(id: string) {
-    AlbumsService.albums = AlbumsService.albums.map((album: IAlbums) => ({
-      ...album,
-      artistId: album.artistId === id ? null : album.artistId,
-    }));
   }
 }

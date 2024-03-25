@@ -1,22 +1,21 @@
 import {
-    IsNotEmpty,
-    IsNumber,
-    IsOptional,
-    IsString,
-    IsUUID,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
 } from 'class-validator';
-  
+
 export class UpdateAlbumDto {
-    @IsNotEmpty()
-    @IsString()
-    name: string;
+  @IsNotEmpty()
+  @IsString()
+  name: string;
 
-    @IsNotEmpty()
-    @IsNumber()
-    year: number;
+  @IsNotEmpty()
+  @IsNumber()
+  year: number;
 
-    @IsOptional()
-    @IsUUID()
-    artistId: string | null;
+  @IsOptional()
+  @IsUUID()
+  artistId: string | null;
 }
-  

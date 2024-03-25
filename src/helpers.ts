@@ -1,13 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { version as getUuidVersion, validate as isValidUuid } from 'uuid';
 import { UUID_VERSION } from './constants';
-import { UpdateTrackDto } from "../tracks/dto/update-track.dto";
-
-export const passwordsNotMatch = () =>
-  new HttpException(
-    'Passwords not match, check OLD password',
-    HttpStatus.FORBIDDEN,
-  );
 
 export const IDValidator = (id: string): boolean => {
   return getUuidVersion(id) === Number(UUID_VERSION) && isValidUuid(id);
@@ -25,8 +18,8 @@ export const itemNotInFavoritesExeption = (item: string) =>
     HttpStatus.UNPROCESSABLE_ENTITY,
   );
 
-export const isValidTrackPayload = (payload: UpdateTrackDto): boolean => {
-  const { name, duration } = payload;
-
-  return typeof name === 'string' || typeof duration === 'number';
-}
+export const passwordsNotMatch = () =>
+  new HttpException(
+    'Passwords not match, check OLD password',
+    HttpStatus.FORBIDDEN,
+  );

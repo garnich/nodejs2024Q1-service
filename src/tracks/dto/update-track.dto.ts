@@ -1,6 +1,25 @@
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
+
 export class UpdateTrackDto {
-    readonly name: string;
-    readonly artistId: string | null; // refers to Artist
-    readonly albumId: string | null; // refers to Album
-    readonly duration: number;
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsUUID()
+  artistId: string | null;
+
+  @IsOptional()
+  @IsUUID()
+  albumId: string | null;
+
+  @IsNotEmpty()
+  @IsNumber()
+  duration: number;
 }

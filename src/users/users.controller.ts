@@ -15,14 +15,13 @@ import {
 import { UserDto } from './dto/user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
-import { IBaseUser } from './users.interface';
 import { UsersService } from './users.service';
 import {
   IDValidator,
   invalidIdExeption,
   itemNotExistExeption,
-} from '../common/helpers';
-import { EXEPTION_ITEM, HEADERS, UUID_VERSION } from '../common/constants';
+} from 'src/helpers';
+import { EXEPTION_ITEM, HEADERS, UUID_VERSION } from 'src/constants';
 
 @Controller('user')
 export class UsersController {
@@ -31,14 +30,14 @@ export class UsersController {
   @Get()
   @Header(HEADERS.ACCEPT, HEADERS.APP_JSON)
   @HttpCode(HttpStatus.OK)
-  findAll(): IBaseUser[] {
+  findAll() {
     return this.userService.getUsers();
   }
 
   @Post()
   @Header(HEADERS.ACCEPT, HEADERS.APP_JSON)
   @HttpCode(HttpStatus.CREATED)
-  createUser(@Body(new ValidationPipe()) CreateUserDto: UserDto): IBaseUser {
+  createUser(@Body(new ValidationPipe()) CreateUserDto: UserDto) {
     return this.userService.createUser(CreateUserDto);
   }
 
@@ -48,7 +47,7 @@ export class UsersController {
   updateUserPass(
     @Body(new ValidationPipe()) updateUserDto: UpdateUserDto,
     @Param('id', new ParseUUIDPipe({ version: UUID_VERSION })) id: string,
-  ): IBaseUser {
+  ) {
     if (!IDValidator(id)) {
       throw invalidIdExeption();
     } else {
@@ -86,11 +85,11 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   findById(
     @Param('id', new ParseUUIDPipe({ version: UUID_VERSION })) id: string,
-  ): IBaseUser {
+  ) {
     if (!IDValidator(id)) {
       throw invalidIdExeption();
     } else {
-      const user: IBaseUser = this.userService.getUser(id);
+      const user = this.userService.getUser(id);
 
       if (!user) {
         throw itemNotExistExeption(EXEPTION_ITEM.USER);
